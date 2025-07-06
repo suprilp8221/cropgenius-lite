@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Manage Crop Costs | Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen p-10">
+
+  <div class="max-w-6xl mx-auto bg-white p-8 rounded-xl shadow-md">
+    <h2 class="text-3xl font-bold text-purple-700 mb-6">💰 Crop Cost Estimations</h2>
+
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse table-auto">
+        <thead>
+          <tr class="bg-purple-100 text-left text-sm font-semibold text-purple-900">
+            <th class="px-4 py-2 border">Crop</th>
+            <th class="px-4 py-2 border">Seeds</th>
+            <th class="px-4 py-2 border">Fertilizers</th>
+            <th class="px-4 py-2 border">Water</th>
+            <th class="px-4 py-2 border">Labor</th>
+            <th class="px-4 py-2 border">Machinery</th>
+            <th class="px-4 py-2 border">Pesticides</th>
+            <th class="px-4 py-2 border">Transport</th>
+            <th class="px-4 py-2 border">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cost in costs %}
+          <tr class="border-b hover:bg-gray-50">
+            <td class="px-4 py-2">{{ cost[0] }}</td>
+            <td class="px-4 py-2">₹{{ cost[1] }}</td>
+            <td class="px-4 py-2">₹{{ cost[2] }}</td>
+            <td class="px-4 py-2">₹{{ cost[3] }}</td>
+            <td class="px-4 py-2">₹{{ cost[4] }}</td>
+            <td class="px-4 py-2">₹{{ cost[5] }}</td>
+            <td class="px-4 py-2">₹{{ cost[6] }}</td>
+            <td class="px-4 py-2">₹{{ cost[7] }}</td>
+            <td class="px-4 py-2">
+              <a href="/edit-cost/{{ cost[0] }}" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm">Edit</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-6">
+      <a href="/admin-dashboard" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700">⬅ Back to Dashboard</a>
+    </div>
+  </div>
+
+</body>
+</html>

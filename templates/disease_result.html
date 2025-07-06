@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Disease Result | CropGenius</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-green-50 text-gray-800 relative">
+
+    <!-- 🌐 Language Switcher -->
+    <div id="google_translate_element" class="absolute top-4 right-4 z-50"></div>
+
+    <!-- Navbar (same as others) -->
+    <nav class="bg-green-600 text-white p-4 flex justify-between items-center">
+        <h1 class="text-2xl font-bold">🌱 CropGenius</h1>
+        <div class="space-x-4">
+            <a href="/" class="hover:underline">Home</a>
+            <a href="/predict" class="hover:underline">Prediction</a>
+            <a href="/yield_cost" class="hover:underline">Yield & Cost</a>
+            <a href="/crop_info" class="hover:underline">Crop Info</a>
+        </div>
+    </nav>
+
+    <!-- Result Section -->
+    <section class="max-w-2xl mx-auto bg-white p-10 mt-10 rounded-xl shadow-lg text-center">
+        <h2 class="text-3xl font-bold mb-6 text-green-700">🌿 Prediction Result</h2>
+
+        <img src="{{ image_path }}" alt="Uploaded Leaf" class="mx-auto mb-6 rounded-xl shadow" width="300">
+
+        <p class="text-xl mb-4"><strong>🦠 Disease:</strong> {{ predicted_class.replace('_', ' ') }}</p>
+        <p class="text-lg mb-3"><strong>💊 Recommended Fertilizer:</strong> {{ fertilizer }}</p>
+        <p class="text-green-700 text-lg font-medium mb-3"><strong>🛡️ Prevention Tip:</strong> {{ tip }}</p>
+        <p class="text-gray-700 text-base"><strong>❓ Cause:</strong> {{ cause }}</p>
+
+        <a href="/" class="mt-6 inline-block bg-green-600 text-white px-6 py-3 rounded-full hover:bg-green-700">
+            🔙 Back to Home
+        </a>
+    </section>
+
+    <!-- 🌐 Google Translate Script -->
+    <script type="text/javascript">
+      function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+          pageLanguage: 'en',
+          includedLanguages: 'en,mr',
+          layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+        }, 'google_translate_element');
+      }
+    </script>
+
+    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+</body>
+</html>

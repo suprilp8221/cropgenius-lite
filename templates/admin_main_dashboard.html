@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Menu | CropGenius</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen p-10">
+
+  <div class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow-md">
+    <h2 class="text-3xl font-bold text-green-700 mb-6">🛠️ Welcome, {{ admin }}</h2>
+    <p class="text-lg mb-4 text-gray-700">Choose what you want to manage:</p>
+
+    <ul class="space-y-4 text-lg text-green-800 font-medium">
+      <li>
+        <a href="/admin" class="block bg-green-100 hover:bg-green-200 p-4 rounded-xl shadow">📝 Edit Crop Details</a>
+      </li>
+      <li>
+        <a href="/admin-costs" class="block bg-purple-100 hover:bg-purple-200 p-4 rounded-xl shadow">💰 Update Cost Estimations</a>
+      </li>
+      <li>
+        <a href="/admin-diseases" class="block bg-red-100 hover:bg-red-200 p-4 rounded-xl shadow">🦠 Manage Disease Info</a>
+      </li>
+    </ul>
+
+    <div class="mt-6 text-center">
+      <a href="/logout" class="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700">Logout</a>
+    </div>
+  </div>
+
+</body>
+</html>

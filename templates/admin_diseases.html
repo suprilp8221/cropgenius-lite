@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Manage Disease Info | Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen p-10">
+
+  <div class="max-w-6xl mx-auto bg-white p-8 rounded-xl shadow-md">
+    <h2 class="text-3xl font-bold text-red-700 mb-6">🦠 Manage Disease Information</h2>
+
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse">
+        <thead>
+          <tr class="bg-red-100 text-left text-sm font-semibold text-red-900">
+            <th class="px-4 py-2 border">Disease Name</th>
+            <th class="px-4 py-2 border">Fertilizer</th>
+            <th class="px-4 py-2 border">Prevention Tip</th>
+            <th class="px-4 py-2 border">Cause</th>
+            <th class="px-4 py-2 border">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for disease in diseases %}
+          <tr class="border-b hover:bg-gray-50">
+            <td class="px-4 py-2">{{ disease[0] }}</td>
+            <td class="px-4 py-2">{{ disease[1] }}</td>
+            <td class="px-4 py-2">{{ disease[2] }}</td>
+            <td class="px-4 py-2">{{ disease[3] }}</td>
+            <td class="px-4 py-2">
+              <a href="/edit-disease/{{ disease[0] }}" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">Edit</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-6">
+      <a href="/admin-dashboard" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700">⬅ Back to Admin Menu</a>
+    </div>
+  </div>
+
+</body>
+</html>

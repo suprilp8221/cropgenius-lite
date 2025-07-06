@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Yield & Cost Estimation</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background-image: url("/static/background.jpg");
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+    .fade-in {
+      animation: fadeIn 0.8s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center px-4 py-10 font-sans text-gray-800 relative">
+
+  <!-- 🌐 Language Switcher (Top-Right Corner) -->
+  <div id="google_translate_element" class="absolute top-4 right-4 z-50"></div>
+
+  <div class="bg-white bg-opacity-90 backdrop-blur-md p-8 rounded-3xl shadow-2xl max-w-3xl w-full fade-in">
+
+    <h2 class="text-4xl font-bold text-green-800 text-center mb-8">🌾 Yield & Cost Estimation</h2>
+
+    <!-- Yield & Cost Form -->
+    <form id="yieldCostForm" action="/calculate_yield_cost" method="POST" onsubmit="return validateForm()" class="space-y-6">
+      <div>
+        <label class="block text-lg font-semibold text-gray-700">Selected Crop:</label>
+        <input type="text" name="crop" value="{{ crop }}" readonly class="mt-2 w-full px-4 py-3 border rounded-xl bg-gray-100" />
+      </div>
+      <div>
+        <label class="block text-lg font-semibold text-gray-700">Enter Land Area (in acres):</label>
+        <input type="number" step="0.1" name="land_area" id="land_area" required class="mt-2 w-full px-4 py-3 border rounded-xl" />
+      </div>
+      <div class="text-center">
+        <button type="submit" class="bg-green-600 text-white text-lg px-8 py-3 rounded-full font-semibold hover:bg-green-700 transition duration-300">
+          📊 Calculate Yield & Cost
+        </button>
+      </div>
+    </form>
+
+    {% if request.method == 'POST' and estimated_yield is not none %}
+    <div class="mt-10 space-y-6">
+
+      <div class="bg-green-50 p-5 rounded-xl shadow">
+        <h3 class="text-xl font-bold text-green-800 mb-2">🌿 Estimated Crop Yield</h3>
+        <p class="text-2xl font-bold">{{ estimated_yield }} quintals</p>
+      </div>
+
+      <div class="bg-yellow-50 p-5 rounded-xl shadow">
+        <h3 class="text-xl font-bold text-yellow-800 mb-2">💰 Estimated Total Cost</h3>
+        <p class="text-2xl font-bold">₹{{ total_cost }}</p>
+      </div>
+
+      <div class="bg-white p-5 rounded-xl shadow">
+        <h3 class="text-xl font-bold text-gray-800 mb-2">📦 Cost Breakdown</h3>
+        <ul class="space-y-1 text-gray-700 text-lg">
+          <li><strong>Seeds:</strong> ₹{{ cost_details.seeds }}</li>
+          <li><strong>Fertilizers:</strong> ₹{{ cost_details.fertilizers }}</li>
+          <li><strong>Water:</strong> ₹{{ cost_details.water }}</li>
+          <li><strong>Labor:</strong> ₹{{ cost_details.labor }}</li>
+          <li><strong>Machinery:</strong> ₹{{ cost_details.machinery }}</li>
+          <li><strong>Pesticides:</strong> ₹{{ cost_details.pesticides }}</li>
+          <li><strong>Transport:</strong> ₹{{ cost_details.transport }}</li>
+        </ul>
+        <hr class="my-2"/>
+        <p class="font-bold text-lg">Total: ₹{{ cost_details.total }}</p>
+      </div>
+
+      <!-- Profit Button -->
+      <div class="text-center mt-4">
+        <button onclick="showProfit()" type="button" class="bg-blue-500 text-white text-lg px-8 py-3 rounded-full hover:bg-blue-600 transition">
+          💹 See Profit
+        </button>
+      </div>
+
+      <!-- Profit Section -->
+      <div id="profitSection" style="display: none;" class="bg-blue-50 p-5 rounded-xl shadow mt-4">
+        <h3 class="text-xl font-bold text-blue-800 mb-2">📈 Market Price & Profit Estimation</h3>
+        <p class="text-lg"><strong>Market Price per Quintal:</strong> ₹{{ market_price }}</p>
+        <p class="text-lg"><strong>Total Profit:</strong> ₹{{ profit }}</p>
+      </div>
+
+    </div>
+    {% endif %}
+
+    <!-- Back Button -->
+    <div class="text-center mt-8">
+      <a href="/" class="inline-block bg-gray-700 text-white text-lg px-8 py-3 rounded-full hover:bg-gray-800 transition">
+        🔙 Go Back
+      </a>
+    </div>
+
+  </div>
+
+  <script>
+    function validateForm() {
+      let landArea = document.getElementById("land_area").value;
+      if (landArea.trim() === "" || parseFloat(landArea) <= 0) {
+        alert("Please enter a valid land area.");
+        return false;
+      }
+      return true;
+    }
+
+    function showProfit() {
+      document.getElementById("profitSection").style.display = "block";
+    }
+  </script>
+
+  <!-- 🌐 Google Translate Script -->
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'en,mr',
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+      }, 'google_translate_element');
+    }
+  </script>
+
+  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+</body>
+</html>
