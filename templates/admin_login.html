@@ -1,31 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Admin Login | CropGenius</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login | CropGenius</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center min-h-screen">
 
-    <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
-        <h2 class="text-2xl font-bold text-green-700 mb-6 text-center">🛠️ Admin Login</h2>
-        <form action="/admin-login" method="POST" class="space-y-4">
-            <div>
-                <label class="block mb-1 text-gray-700">Username</label>
-                <input type="text" name="username" required
-                       class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
-            </div>
-            <div>
-                <label class="block mb-1 text-gray-700">Password</label>
-                <input type="password" name="password" required
-                       class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
-            </div>
-            <button type="submit"
-                    class="w-full bg-green-600 text-white py-2 rounded-md font-semibold hover:bg-green-700 transition">
-                Log In
-            </button>
-        </form>
-    </div>
+  <div class="bg-white/90 backdrop-blur-md p-8 rounded-2xl shadow-xl w-full max-w-md">
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-green-700 mb-6 text-center">🛠️ Admin Login</h2>
+
+    <form action="/admin-login" method="POST" class="space-y-5">
+      <div>
+        <label class="block mb-1 text-sm font-medium text-gray-700">Username</label>
+        <input type="text" name="username" required
+               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
+      </div>
+
+      <div>
+        <label class="block mb-1 text-sm font-medium text-gray-700">Password</label>
+        <input type="password" name="password" required
+               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
+      </div>
+
+      <button type="submit"
+              class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold transition">
+        Log&nbsp;In
+      </button>
+    </form>
+  </div>
 
 </body>
 </html>
