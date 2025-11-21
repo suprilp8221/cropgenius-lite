@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request, session, redirect, flash
+from flask import Flask, render_template, request, session, redirect, flash, jsonify
 import sqlite3
 import pickle
 import numpy as np
 import os
+import requests
 # from tensorflow.keras.models import load_model
 # from tensorflow.keras.preprocessing import image
 
@@ -11,6 +12,9 @@ import os
 app = Flask(__name__)
 app.secret_key = 'your_very_secret_key_here'
 
+# OpenWeatherMap API Configuration
+# Get your free API key from: https://openweathermap.org/api
+OPENWEATHER_API_KEY = '4376a58206d0931f720fdb84caa4e16b'  # Replace with your actual API key
 
 # Load trained ML model
 with open('crop_model.pkl', 'rb') as model_file:
@@ -71,6 +75,87 @@ def get_market_price(crop_name):
         result = cursor.fetchone()
         return result[0] if result else 0
 
+
+
+# Weather API route
+@app.route('/get-weather', methods=['POST'])
+def get_weather():
+    try:
+        data = request.get_json()
+        location = data.get('location', '').strip()
+        
+        if not location:
+            return jsonify({'error': 'Location is required'}), 400
+        
+        # Check if API key is configured properly
+        if OPENWEATHER_API_KEY == 'YOUR_API_KEY_HERE' or OPENWEATHER_API_KEY == '17bf4de614fd7c4add7635a6d64b7d06':
+            # Return demo data if API key is not configured
+            demo_data = {
+                'Mumbai': {'temp': 28.5, 'humidity': 75, 'rainfall': 2.5},
+                'Delhi': {'temp': 32.0, 'humidity': 60, 'rainfall': 0},
+                'Pune': {'temp': 26.0, 'humidity': 70, 'rainfall': 1.2},
+                'Bangalore': {'temp': 24.5, 'humidity': 65, 'rainfall': 3.0},
+                'Chennai': {'temp': 30.0, 'humidity': 80, 'rainfall': 5.0},
+                'Kolkata': {'temp': 29.5, 'humidity': 82, 'rainfall': 4.5},
+            }
+            
+            # Check if location matches demo data
+            location_key = location.title()
+            if location_key in demo_data:
+                demo = demo_data[location_key]
+                return jsonify({
+                    'temperature': demo['temp'],
+                    'humidity': demo['humidity'],
+                    'rainfall': demo['rainfall'],
+                    'location': location_key + ' (Demo Data - Get real API key from openweathermap.org)'
+                })
+            else:
+                # Return default demo values for unknown locations
+                return jsonify({
+                    'temperature': 27.0,
+                    'humidity': 70,
+                    'rainfall': 2.0,
+                    'location': location + ' (Demo Data - Get real API key from openweathermap.org)'
+                })
+        
+        # Call OpenWeatherMap API with real key
+        url = f'http://api.openweathermap.org/data/2.5/weather?q={location}&appid={OPENWEATHER_API_KEY}&units=metric'
+        response = requests.get(url, timeout=10)
+        
+        if response.status_code == 200:
+            weather_data = response.json()
+            
+            # Extract required data
+            temperature = weather_data['main']['temp']
+            humidity = weather_data['main']['humidity']
+            
+            # Rainfall (mm) - use 1h rain if available, else 0
+            rainfall = weather_data.get('rain', {}).get('1h', 0)
+            
+            # If no recent rain, check if there's any precipitation
+            if rainfall == 0:
+                # Approximate from weather description or set to minimal value
+                weather_desc = weather_data['weather'][0]['main'].lower()
+                if 'rain' in weather_desc or 'drizzle' in weather_desc:
+                    rainfall = 5  # Default light rain value
+            
+            return jsonify({
+                'temperature': round(temperature, 2),
+                'humidity': humidity,
+                'rainfall': round(rainfall, 2),
+                'location': weather_data['name']
+            })
+        elif response.status_code == 401:
+            return jsonify({'error': 'Invalid API key. Please get a valid key from openweathermap.org'}), 401
+        else:
+            return jsonify({'error': 'Location not found. Please enter a valid city name.'}), 404
+            
+    except requests.exceptions.Timeout:
+        return jsonify({'error': 'Weather service timeout. Please try again.'}), 500
+    except requests.exceptions.RequestException:
+        return jsonify({'error': 'Unable to fetch weather data. Please check your internet connection.'}), 500
+    except Exception as e:
+        return jsonify({'error': f'An error occurred: {str(e)}'}), 500
 
 
 # Home route
