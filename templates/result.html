@@ -61,14 +61,24 @@
       </div>
     </div>
 
-    <!-- Action Button -->
-    <form action="/yield_cost" method="GET" class="mt-10 text-center">
-      <input type="hidden" name="crop" value="{{ crop }}">
-      <button type="submit"
-              class="bg-green-500 text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:bg-green-600 hover:scale-105 transition duration-300">
-        🚜 Calculate Yield & Cost Estimation
-      </button>
-    </form>
+    <!-- Action Buttons -->
+    <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center">
+      <form action="/yield_cost" method="GET" class="flex-1 max-w-sm">
+        <input type="hidden" name="crop" value="{{ crop }}">
+        <button type="submit"
+                class="w-full bg-green-500 text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:bg-green-600 hover:scale-105 transition duration-300">
+          🚜 Calculate Yield & Cost
+        </button>
+      </form>
+
+      <form action="/compare-crops" method="POST" class="flex-1 max-w-sm">
+        <input type="hidden" name="crop1" value="{{ crop }}">
+        <button type="submit"
+                class="w-full bg-blue-500 text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:bg-blue-600 hover:scale-105 transition duration-300">
+          ⚖️ Compare with Other Crops
+        </button>
+      </form>
+    </div>
 
     <!-- Back to Predict Again -->
     <div class="text-center mt-6">
@@ -82,7 +92,7 @@
     function googleTranslateElementInit() {
       new google.translate.TranslateElement({
         pageLanguage: 'en',
-        includedLanguages: 'en,mr',
+        includedLanguages: 'en,mr,hi,ta,te,kn,gu,bn,pa',
         layout: google.translate.TranslateElement.InlineLayout.SIMPLE
       }, 'google_translate_element');
     }

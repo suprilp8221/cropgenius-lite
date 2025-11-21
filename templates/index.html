@@ -17,9 +17,11 @@
 
   <div class="flex flex-wrap items-center gap-2 sm:gap-4">
     <a href="/" class="hover:underline">Home</a>
-    <a href="/predict" class="hover:underline">Prediction</a>
+    <a href="/dashboard" class="hover:underline">Dashboard</a>
+    <a href="/my-predictions" class="hover:underline">My Predictions</a>
+    <a href="/compare-crops" class="hover:underline">Compare Crops</a>
     <a href="/yield_cost" class="hover:underline">Yield & Cost</a>
-    <a href="/crop_info" class="hover:underline">Crop Info</a>
+    <a href="/smart_bima" class="hover:underline">Smart Bima</a>
 
     {% if session.get('username') %}
       <span class="ml-2 font-semibold">👋 {{ session['username'] }}</span>
@@ -68,10 +70,13 @@
   </div>
 
   <form action="/predict" method="POST">
+    <!-- Hidden field to capture location from weather API -->
+    <input type="hidden" name="location" id="location-hidden" value="">
+    
     <!-- Soil Nutrients Section -->
     <div class="mb-8">
-      <h4 class="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2 pb-2 border-b-2 border-green-200">
-        <span class="text-2xl">🧪</span> Soil Nutrients (NPK)
+      <h4 class="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2 pb-3 border-b-2 border-green-200">
+        <span class="text-3xl">🧪</span> Soil Nutrients (NPK Values)
       </h4>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div class="group">
@@ -178,7 +183,7 @@
   function googleTranslateElementInit() {
     new google.translate.TranslateElement({
       pageLanguage: 'en',
-      includedLanguages: 'en,mr',
+      includedLanguages: 'en,mr,hi,ta,te,kn,gu,bn,pa',
       layout: google.translate.TranslateElement.InlineLayout.SIMPLE
     }, 'google_translate_element');
   }
@@ -213,6 +218,9 @@
         document.getElementById('temperature').value = parseFloat(data.temperature).toFixed(1);
         document.getElementById('humidity').value = Math.round(data.humidity);
         document.getElementById('rainfall').value = parseFloat(data.rainfall).toFixed(1);
+        
+        // Save location to hidden field
+        document.getElementById('location-hidden').value = data.location;
 
         // Show success message
         statusElement.innerHTML = `<span class="text-green-600">✅ Weather data loaded for ${data.location}</span>`;

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Compare Crops | CropGenius</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="bg-green-50 text-gray-800">
+
+<!-- Navbar -->
+<nav class="bg-green-600 text-white p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
+  <h1 class="text-2xl font-bold">🌱 CropGenius</h1>
+
+  <div class="flex flex-wrap items-center gap-2 sm:gap-4">
+    <a href="/" class="hover:underline">Home</a>
+    <a href="/dashboard" class="hover:underline">Dashboard</a>
+    <a href="/my-predictions" class="hover:underline">My Predictions</a>
+    <a href="/compare-crops" class="hover:underline font-semibold">Compare Crops</a>
+    <a href="/yield_cost" class="hover:underline">Yield & Cost</a>
+    <a href="/smart_bima" class="hover:underline">Smart Bima</a>
+
+    {% if session.get('username') %}
+      <span class="ml-2 font-semibold">👋 {{ session['username'] }}</span>
+      <a href="/logout" class="bg-red-500 px-3 py-1 rounded hover:bg-red-600 text-sm">Logout</a>
+    {% endif %}
+
+    <div id="google_translate_element" class="ml-2"></div>
+  </div>
+</nav>
+
+<!-- Header Section -->
+<section class="bg-gradient-to-r from-blue-600 to-purple-700 text-white py-12 px-4 text-center">
+  <h2 class="text-3xl sm:text-4xl font-bold mb-3">⚖️ Crop Comparison Tool</h2>
+  <p class="text-blue-100 text-lg">Compare up to 3 crops side-by-side to make informed decisions</p>
+</section>
+
+<!-- Selection Form -->
+<section class="max-w-6xl mx-auto mt-10 px-4">
+  <div class="bg-white rounded-3xl shadow-xl p-8 mb-10">
+    <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">🔍 Select Crops to Compare</h3>
+    
+    <form method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Crop 1</label>
+        <select name="crop1" required 
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+          <option value="">-- Select Crop --</option>
+          {% for crop in all_crops %}
+          <option value="{{ crop }}" {% if selected_crops and selected_crops|length > 0 and selected_crops[0] == crop %}selected{% endif %}>{{ crop }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Crop 2</label>
+        <select name="crop2" required
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+          <option value="">-- Select Crop --</option>
+          {% for crop in all_crops %}
+          <option value="{{ crop }}" {% if selected_crops and selected_crops|length > 1 and selected_crops[1] == crop %}selected{% endif %}>{{ crop }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Crop 3 (Optional)</label>
+        <select name="crop3"
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+          <option value="">-- Select Crop --</option>
+          {% for crop in all_crops %}
+          <option value="{{ crop }}" {% if selected_crops and selected_crops|length > 2 and selected_crops[2] == crop %}selected{% endif %}>{{ crop }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="md:col-span-3 text-center">
+        <button type="submit"
+                class="bg-gradient-to-r from-blue-600 to-purple-700 text-white px-12 py-4 rounded-full font-bold text-lg hover:from-blue-700 hover:to-purple-800 transition shadow-lg hover:shadow-xl transform hover:scale-105">
+          ⚖️ Compare Now
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {% if comparison_data %}
+  <!-- Comparison Results -->
+  <div class="mb-12">
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-{{ comparison_data|length }} gap-6 mb-8">
+      {% for crop in comparison_data %}
+      <div class="bg-gradient-to-br from-{{ loop.index == 1 and 'green' or loop.index == 2 and 'blue' or 'purple' }}-500 to-{{ loop.index == 1 and 'green' or loop.index == 2 and 'blue' or 'purple' }}-600 text-white rounded-2xl p-6 shadow-lg">
+        <h3 class="text-2xl font-bold mb-4 text-center">🌾 {{ crop.name }}</h3>
+        <div class="space-y-3">
+          <div class="bg-white bg-opacity-20 rounded-lg p-3">
+            <p class="text-sm opacity-90">Profit per Acre</p>
+            <p class="text-3xl font-bold">₹{{ "{:,.0f}".format(crop.profit_per_acre) }}</p>
+          </div>
+          <div class="bg-white bg-opacity-20 rounded-lg p-3">
+            <p class="text-sm opacity-90">Growth Duration</p>
+            <p class="text-xl font-bold">{{ crop.growth_duration }}</p>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Detailed Comparison Table -->
+    <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gradient-to-r from-gray-700 to-gray-800 text-white">
+            <tr>
+              <th class="px-6 py-4 text-left font-bold">Comparison Factor</th>
+              {% for crop in comparison_data %}
+              <th class="px-6 py-4 text-center font-bold">{{ crop.name }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            <!-- Basic Info -->
+            <tr class="bg-blue-50">
+              <td class="px-6 py-4 font-bold text-gray-700">🌱 Soil Type</td>
+              {% for crop in comparison_data %}
+              <td class="px-6 py-4 text-center">{{ crop.soil_type }}</td>
+              {% endfor %}
+            </tr>
+
+            <tr class="bg-white">
+              <td class="px-6 py-4 font-bold text-gray-700">⏱️ Growth Duration</td>
+              {% for crop in comparison_data %}
+              <td class="px-6 py-4 text-center font-semibold">{{ crop.growth_duration }}</td>
+              {% endfor %}
+            </tr>
+
+            <!-- Yield & Economics -->
+            <tr class="bg-green-50">
+              <td class="px-6 py-4 font-bold text-gray-700">📊 Yield per Acre</td>
+              {% for crop in comparison_data %}
+              <td class="px-6 py-4 text-center font-semibold text-green-700">{{ crop.yield_per_acre }} units</td>
+              {% endfor %}
+            </tr>
+
+            <tr class="bg-white">
+              <td class="px-6 py-4 font-bold text-gray-700">💰 Market Price (per unit)</td>
+              {% for crop in comparison_data %}
+              <td class="px-6 py-4 text-center font-semibold">₹{{ "{:,.0f}".format(crop.market_price) }}</td>
+              {% endfor %}
+            </tr>
+
+            <tr class="bg-yellow-50">
+              <td class="px-6 py-4 font-bold text-gray-700">💸 Total Cost per Acre</td>
+              {% for crop in comparison_data %}
+              <td class="px-6 py-4 text-center font-semibold text-red-600">₹{{ "{:,.0f}".format(crop.total_cost) }}</td>
+              {% endfor %}
+            </tr>
+
+            <tr class="bg-green-100">
+              <td class="px-6 py-4 font-bold text-gray-700">💵 Profit per Acre</td>
+              {% for crop in comparison_data %}
+              <td class="px-6 py-4 text-center font-bold text-2xl text-green-700">₹{{ "{:,.0f}".format(crop.profit_per_acre) }}</td>
+              {% endfor %}
+            </tr>
+
+            <!-- Cost Breakdown -->
+            <tr class="bg-gray-100">
+              <td colspan="{{ comparison_data|length + 1 }}" class="px-6 py-3 font-bold text-gray-800 text-center">
+                💰 Cost Breakdown (per Acre)
+              </td>
+            </tr>
+
+            <tr class="bg-white">
+              <td class="px-6 py-3 font-semibold text-gray-700">🌾 Seeds Cost</td>
+              {% for crop in comparison_data %}
+              <td class="px-6 py-3 text-center">₹{{ "{:,.0f}".format(crop.costs.seeds) }}</td>
+              {% endfor %}
+            </tr>
+
+            <tr class="bg-gray-50">
+              <td class="px-6 py-3 font-semibold text-gray-700">🧪 Fertilizers Cost</td>
+              {% for crop in comparison_data %}
+              <td class="px-6 py-3 text-center">₹{{ "{:,.0f}".format(crop.costs.fertilizers) }}</td>
+              {% endfor %}
+            </tr>
+
+            <tr class="bg-white">
+              <td class="px-6 py-3 font-semibold text-gray-700">💧 Water Cost</td>
+              {% for crop in comparison_data %}
+              <td class="px-6 py-3 text-center">₹{{ "{:,.0f}".format(crop.costs.water) }}</td>
+              {% endfor %}
+            </tr>
+
+            <tr class="bg-gray-50">
+              <td class="px-6 py-3 font-semibold text-gray-700">👷 Labor Cost</td>
+              {% for crop in comparison_data %}
+              <td class="px-6 py-3 text-center">₹{{ "{:,.0f}".format(crop.costs.labor) }}</td>
+              {% endfor %}
+            </tr>
+
+            <tr class="bg-white">
+              <td class="px-6 py-3 font-semibold text-gray-700">🚜 Machinery Cost</td>
+              {% for crop in comparison_data %}
+              <td class="px-6 py-3 text-center">₹{{ "{:,.0f}".format(crop.costs.machinery) }}</td>
+              {% endfor %}
+            </tr>
+
+            <tr class="bg-gray-50">
+              <td class="px-6 py-3 font-semibold text-gray-700">🦟 Pesticides Cost</td>
+              {% for crop in comparison_data %}
+              <td class="px-6 py-3 text-center">₹{{ "{:,.0f}".format(crop.costs.pesticides) }}</td>
+              {% endfor %}
+            </tr>
+
+            <tr class="bg-white">
+              <td class="px-6 py-3 font-semibold text-gray-700">🚚 Transport Cost</td>
+              {% for crop in comparison_data %}
+              <td class="px-6 py-3 text-center">₹{{ "{:,.0f}".format(crop.costs.transport) }}</td>
+              {% endfor %}
+            </tr>
+
+            <!-- Other Info -->
+            <tr class="bg-red-50">
+              <td class="px-6 py-4 font-bold text-gray-700">🦠 Common Diseases</td>
+              {% for crop in comparison_data %}
+              <td class="px-6 py-4 text-center text-sm">{{ crop.diseases }}</td>
+              {% endfor %}
+            </tr>
+
+            <tr class="bg-white">
+              <td class="px-6 py-4 font-bold text-gray-700">🌿 Best Fertilizers</td>
+              {% for crop in comparison_data %}
+              <td class="px-6 py-4 text-center text-sm">{{ crop.fertilizers }}</td>
+              {% endfor %}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Winner Highlight -->
+    <div class="mt-8 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-2xl p-8 text-center shadow-xl">
+      {% set best_crop = comparison_data|sort(attribute='profit_per_acre', reverse=true)|first %}
+      <h3 class="text-3xl font-bold mb-2">🏆 Best Profitability</h3>
+      <p class="text-5xl font-bold mb-2">{{ best_crop.name }}</p>
+      <p class="text-2xl">Profit: ₹{{ "{:,.0f}".format(best_crop.profit_per_acre) }} per acre</p>
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+<!-- Footer -->
+<footer class="bg-green-600 text-white text-center p-4 mt-10 text-sm sm:text-base">
+  <p>© 2025 CropGenius | Designed for Smart Farming</p>
+</footer>
+
+<script type="text/javascript">
+  function googleTranslateElementInit() {
+    new google.translate.TranslateElement({
+      pageLanguage: 'en',
+      includedLanguages: 'en,mr,hi,ta,te,kn,gu,bn,pa',
+      layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+    }, 'google_translate_element');
+  }
+</script>
+<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+</body>
+</html>

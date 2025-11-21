@@ -8,6 +8,9 @@
 </head>
 <body class="bg-gradient-to-br from-green-400 via-green-500 to-green-600 flex items-center justify-center min-h-screen p-4">
 
+  <!-- 🌐 Language Switcher (Top-Right) -->
+  <div id="google_translate_element" class="absolute top-4 right-4 z-50"></div>
+
   <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
     <!-- Header -->
     <div class="bg-gradient-to-r from-green-600 to-green-700 p-6 text-center">
@@ -121,6 +124,18 @@
       }
     }
   </script>
+
+  <!-- 🌐 Google Translate Script -->
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'en,mr,hi,ta,te,kn,gu,bn,pa',
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+      }, 'google_translate_element');
+    }
+  </script>
+  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
 </body>
 </html>

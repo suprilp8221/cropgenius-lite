@@ -172,6 +172,204 @@ def home():
     return render_template('index.html')  # Show homepage only if logged in
 
 
+# User Dashboard route
+@app.route('/dashboard')
+def dashboard():
+    if 'username' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect("crop_info.db")
+    cursor = conn.cursor()
+    
+    # Get total predictions count
+    cursor.execute("""
+        SELECT COUNT(*) FROM prediction_history WHERE username = ?
+    """, (session['username'],))
+    total_predictions = cursor.fetchone()[0]
+    
+    # Get most recommended crop
+    cursor.execute("""
+        SELECT predicted_crop, COUNT(*) as count 
+        FROM prediction_history 
+        WHERE username = ?
+        GROUP BY predicted_crop 
+        ORDER BY count DESC 
+        LIMIT 1
+    """, (session['username'],))
+    top_crop_result = cursor.fetchone()
+    top_crop = top_crop_result[0] if top_crop_result else None
+    
+    # Get unique crops count
+    cursor.execute("""
+        SELECT COUNT(DISTINCT predicted_crop) FROM prediction_history WHERE username = ?
+    """, (session['username'],))
+    unique_crops = cursor.fetchone()[0]
+    
+    # Get last activity
+    cursor.execute("""
+        SELECT prediction_date FROM prediction_history 
+        WHERE username = ? 
+        ORDER BY prediction_date DESC 
+        LIMIT 1
+    """, (session['username'],))
+    last_activity_result = cursor.fetchone()
+    last_activity = last_activity_result[0][:10] if last_activity_result else None
+    
+    # Get recent predictions (last 5)
+    cursor.execute("""
+        SELECT id, nitrogen, phosphorus, potassium, temperature, humidity, ph, rainfall, 
+               predicted_crop, location, prediction_date
+        FROM prediction_history 
+        WHERE username = ?
+        ORDER BY prediction_date DESC
+        LIMIT 5
+    """, (session['username'],))
+    recent_predictions = cursor.fetchall()
+    
+    # Get crop distribution
+    cursor.execute("""
+        SELECT predicted_crop, COUNT(*) as count 
+        FROM prediction_history 
+        WHERE username = ?
+        GROUP BY predicted_crop 
+        ORDER BY count DESC
+    """, (session['username'],))
+    crop_distribution = cursor.fetchall()
+    
+    conn.close()
+    
+    # Prepare data for chart
+    crop_labels = [crop[0] for crop in crop_distribution]
+    crop_counts = [crop[1] for crop in crop_distribution]
+    
+    return render_template('user_dashboard.html', 
+                          total_predictions=total_predictions,
+                          top_crop=top_crop,
+                          unique_crops=unique_crops,
+                          last_activity=last_activity,
+                          recent_predictions=recent_predictions,
+                          crop_distribution=crop_distribution,
+                          crop_labels=crop_labels,
+                          crop_counts=crop_counts)
+
+
+# My Predictions History route
+@app.route('/my-predictions')
+def my_predictions():
+    if 'username' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect("crop_info.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, nitrogen, phosphorus, potassium, temperature, humidity, ph, rainfall, 
+               predicted_crop, location, prediction_date
+        FROM prediction_history 
+        WHERE username = ?
+        ORDER BY prediction_date DESC
+    """, (session['username'],))
+    predictions = cursor.fetchall()
+    conn.close()
+    
+    return render_template('my_predictions.html', predictions=predictions)
+
+
+# Delete prediction from history
+@app.route('/delete-prediction/<int:prediction_id>')
+def delete_prediction(prediction_id):
+    if 'username' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect("crop_info.db")
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM prediction_history WHERE id = ? AND username = ?", 
+                  (prediction_id, session['username']))
+    conn.commit()
+    conn.close()
+    
+    return redirect('/my-predictions')
+
+
+# Compare Crops route
+@app.route('/compare-crops', methods=['GET', 'POST'])
+def compare_crops():
+    if 'username' not in session:
+        return redirect('/login')
+    
+    selected_crops = []
+    comparison_data = []
+    
+    if request.method == 'POST':
+        # Get selected crops from form
+        crop1 = request.form.get('crop1', '').strip()
+        crop2 = request.form.get('crop2', '').strip()
+        crop3 = request.form.get('crop3', '').strip()
+        
+        selected_crops = [c for c in [crop1, crop2, crop3] if c]
+        
+        # Fetch details for each crop
+        conn = sqlite3.connect("crop_info.db")
+        cursor = conn.cursor()
+        
+        for crop in selected_crops:
+            # Get crop info
+            cursor.execute("""
+                SELECT name, soil_type, growth_duration, diseases, best_fertilizers, 
+                       COALESCE(yield_per_acre, 0)
+                FROM crops WHERE LOWER(name) = ?
+            """, (crop.lower(),))
+            crop_data = cursor.fetchone()
+            
+            # Get cost info
+            cursor.execute("""
+                SELECT seeds_cost, fertilizers_cost, water_cost, labor_cost, 
+                       machinery_cost, pesticides_cost, transport_cost, market_price
+                FROM crop_costs WHERE LOWER(crop_name) = ?
+            """, (crop.lower(),))
+            cost_data = cursor.fetchone()
+            
+            if crop_data:
+                total_cost = sum(cost_data[:7]) if cost_data else 0
+                market_price = cost_data[7] if cost_data else 0
+                yield_per_acre = crop_data[5]
+                profit_per_acre = (market_price * yield_per_acre) - total_cost if market_price and yield_per_acre else 0
+                
+                comparison_data.append({
+                    'name': crop_data[0],
+                    'soil_type': crop_data[1],
+                    'growth_duration': crop_data[2],
+                    'diseases': crop_data[3],
+                    'fertilizers': crop_data[4],
+                    'yield_per_acre': yield_per_acre,
+                    'total_cost': total_cost,
+                    'market_price': market_price,
+                    'profit_per_acre': profit_per_acre,
+                    'costs': {
+                        'seeds': cost_data[0] if cost_data else 0,
+                        'fertilizers': cost_data[1] if cost_data else 0,
+                        'water': cost_data[2] if cost_data else 0,
+                        'labor': cost_data[3] if cost_data else 0,
+                        'machinery': cost_data[4] if cost_data else 0,
+                        'pesticides': cost_data[5] if cost_data else 0,
+                        'transport': cost_data[6] if cost_data else 0,
+                    } if cost_data else {}
+                })
+        
+        conn.close()
+    
+    # Get all available crops for dropdown
+    conn = sqlite3.connect("crop_info.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT name FROM crops ORDER BY name")
+    all_crops = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    
+    return render_template('compare_crops.html', 
+                          comparison_data=comparison_data, 
+                          all_crops=all_crops,
+                          selected_crops=selected_crops)
+
+
 # Predict route
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -184,12 +382,25 @@ def predict():
         humidity = float(request.form.get('humidity', 0))
         pH = float(request.form.get('pH', 0))
         rainfall = float(request.form.get('rainfall', 0))
+        location = request.form.get('location', '')  # Optional location field
 
         # Create input array
         input_data = np.array([[N, P, K, temperature, humidity, pH, rainfall]])
         
         # Predict crop
         predicted_crop = model.predict(input_data)[0]
+
+        # Save prediction to history if user is logged in
+        if 'username' in session:
+            conn = sqlite3.connect("crop_info.db")
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO prediction_history 
+                (username, nitrogen, phosphorus, potassium, temperature, humidity, ph, rainfall, predicted_crop, location)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (session['username'], N, P, K, temperature, humidity, pH, rainfall, predicted_crop, location))
+            conn.commit()
+            conn.close()
 
         # Fetch crop details
         crop_info = get_crop_info(predicted_crop)
@@ -201,27 +412,132 @@ def predict():
     
 @app.route('/yield_cost', methods=['GET', 'POST'])
 def yield_cost():
-    crop = request.args.get('crop', '')
+    # Get all available crops for dropdown
+    conn = sqlite3.connect("crop_info.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT name FROM crops ORDER BY name")
+    all_crops = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    
+    # Get crop from URL parameter or form submission
+    crop = request.args.get('crop', '') or request.form.get('crop', '')
     land_area = request.form.get('land_area', 1, type=float)  # Default land_area to 1
 
-    # Fetch crop yield info
-    crop_info = get_crop_info(crop)
-    estimated_yield = land_area * crop_info["yield_per_acre"] if crop_info else 0
+    # Initialize variables
+    crop_info = None
+    estimated_yield = 0
+    cost_details = None
+    total_cost = 0
+    market_price = 0
+    profit = 0
 
-    # Fetch cost details
-    cost_details = get_crop_costs(crop)
+    if crop:
+        # Fetch crop yield info
+        crop_info = get_crop_info(crop)
+        estimated_yield = land_area * crop_info["yield_per_acre"] if crop_info else 0
 
-    if cost_details:
-        # Multiply each cost by land area
-        for key in cost_details:
-            if key != "total":
-                cost_details[key] *= land_area
-        cost_details["total"] *= land_area  # Scale total cost too
-        total_cost = cost_details["total"]
-    else:
-        total_cost = 0  # Default if no data found
+        # Fetch cost details
+        cost_details = get_crop_costs(crop)
 
-    return render_template('yield_cost.html', crop=crop, estimated_yield=estimated_yield, total_cost=total_cost, cost_details=cost_details)
+        if cost_details:
+            # Multiply each cost by land area
+            for key in cost_details:
+                if key != "total":
+                    cost_details[key] *= land_area
+            cost_details["total"] *= land_area  # Scale total cost too
+            total_cost = cost_details["total"]
+
+        # Calculate market price and profit
+        market_price = get_market_price(crop)
+        total_revenue = market_price * estimated_yield
+        profit = total_revenue - total_cost
+
+    return render_template('yield_cost.html', 
+                          crop=crop, 
+                          estimated_yield=estimated_yield, 
+                          total_cost=total_cost, 
+                          cost_details=cost_details,
+                          all_crops=all_crops,
+                          land_area=land_area,
+                          market_price=market_price,
+                          profit=profit)
+
+@app.route('/smart_bima', methods=['GET', 'POST'])
+def smart_bima():
+    if 'username' not in session:
+        return redirect('/login')
+    
+    # Get all insurance schemes
+    conn = sqlite3.connect("crop_info.db")
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM insurance_schemes ORDER BY scheme_name")
+    schemes_raw = cursor.fetchall()
+    
+    # Get all crops for dropdown
+    cursor.execute("SELECT DISTINCT name FROM crops ORDER BY name")
+    all_crops = [row[0] for row in cursor.fetchall()]
+    
+    conn.close()
+    
+    # Convert schemes to dict format
+    schemes = []
+    for scheme in schemes_raw:
+        schemes.append({
+            'id': scheme[0],
+            'scheme_name': scheme[1],
+            'scheme_type': scheme[2],
+            'coverage_type': scheme[3],
+            'base_premium_rate': scheme[4],
+            'subsidy_percentage': scheme[5],
+            'max_sum_insured': scheme[6],
+            'description': scheme[7],
+            'eligibility': scheme[8]
+        })
+    
+    premium_details = None
+    selected_scheme = None
+    selected_crop = None
+    land_area = None
+    sum_insured = None
+    
+    if request.method == 'POST':
+        scheme_id = request.form.get('scheme_id', type=int)
+        selected_crop = request.form.get('crop')
+        land_area = request.form.get('land_area', type=float)
+        sum_insured = request.form.get('sum_insured', type=float)
+        
+        # Get selected scheme details
+        selected_scheme = next((s for s in schemes if s['id'] == scheme_id), None)
+        
+        if selected_scheme and sum_insured:
+            # Calculate premium
+            base_premium = (selected_scheme['base_premium_rate'] / 100) * sum_insured
+            subsidy_amount = (selected_scheme['subsidy_percentage'] / 100) * base_premium
+            farmer_premium = base_premium - subsidy_amount
+            
+            premium_details = {
+                'scheme_name': selected_scheme['scheme_name'],
+                'scheme_type': selected_scheme['scheme_type'],
+                'coverage_type': selected_scheme['coverage_type'],
+                'crop': selected_crop,
+                'land_area': land_area,
+                'sum_insured': sum_insured,
+                'premium_rate': selected_scheme['base_premium_rate'],
+                'base_premium': base_premium,
+                'subsidy_percentage': selected_scheme['subsidy_percentage'],
+                'subsidy_amount': subsidy_amount,
+                'farmer_premium': farmer_premium
+            }
+    
+    return render_template('smart_bima.html',
+                          schemes=schemes,
+                          all_crops=all_crops,
+                          premium_details=premium_details,
+                          selected_scheme=selected_scheme,
+                          selected_crop=selected_crop,
+                          land_area=land_area,
+                          sum_insured=sum_insured)
 
 @app.route('/disease-detect')
 def disease_detect_disabled():

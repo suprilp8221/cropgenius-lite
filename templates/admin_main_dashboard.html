@@ -8,6 +8,9 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4 sm:p-10">
 
+  <!-- 🌐 Language Switcher (Top-Right) -->
+  <div id="google_translate_element" class="absolute top-4 right-4 z-50"></div>
+
   <div class="bg-white p-8 sm:p-10 rounded-2xl shadow-xl w-full max-w-2xl">
     <h2 class="text-3xl sm:text-4xl font-bold text-green-700 mb-2 sm:mb-4 text-center">
       🛠️ Welcome, {{ admin }}
@@ -32,6 +35,18 @@
       </a>
     </div>
   </div>
+
+  <!-- 🌐 Google Translate Script -->
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'en,mr,hi,ta,te,kn,gu,bn,pa',
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+      }, 'google_translate_element');
+    }
+  </script>
+  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
 </body>
 </html>

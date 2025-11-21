@@ -32,72 +32,173 @@
     <h2 class="text-4xl font-bold text-green-800 text-center mb-8">🌾 Yield & Cost Estimation</h2>
 
     <!-- Yield & Cost Form -->
-    <form id="yieldCostForm" action="/calculate_yield_cost" method="POST" onsubmit="return validateForm()" class="space-y-6">
+    <form action="/yield_cost" method="POST" onsubmit="return validateForm()" class="space-y-6">
+      
+      <!-- Crop Selector -->
       <div>
-        <label class="block text-lg font-semibold text-gray-700">Selected Crop:</label>
-        <input type="text" name="crop" value="{{ crop }}" readonly class="mt-2 w-full px-4 py-3 border rounded-xl bg-gray-100" />
+        <label class="block text-lg font-semibold text-gray-700 mb-2">
+          🌱 Select Crop:
+        </label>
+        <select name="crop" required 
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition">
+          <option value="">-- Choose a Crop --</option>
+          {% for available_crop in all_crops %}
+          <option value="{{ available_crop }}" {% if available_crop == crop %}selected{% endif %}>
+            {{ available_crop }}
+          </option>
+          {% endfor %}
+        </select>
       </div>
+
+      <!-- Land Area Input -->
       <div>
-        <label class="block text-lg font-semibold text-gray-700">Enter Land Area (in acres):</label>
-        <input type="number" step="0.1" name="land_area" id="land_area" required class="mt-2 w-full px-4 py-3 border rounded-xl" />
+        <label class="block text-lg font-semibold text-gray-700 mb-2">
+          📏 Enter Land Area (in acres):
+        </label>
+        <input type="number" step="0.1" name="land_area" id="land_area" 
+               value="{{ land_area if land_area else '' }}" 
+               required 
+               placeholder="e.g., 5.0"
+               class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition" />
       </div>
+
+      <!-- Submit Button -->
       <div class="text-center">
-        <button type="submit" class="bg-green-600 text-white text-lg px-8 py-3 rounded-full font-semibold hover:bg-green-700 transition duration-300">
+        <button type="submit" class="bg-gradient-to-r from-green-600 to-green-700 text-white text-lg px-10 py-4 rounded-full font-bold hover:from-green-700 hover:to-green-800 transition duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
           📊 Calculate Yield & Cost
         </button>
       </div>
     </form>
 
-    {% if request.method == 'POST' and estimated_yield is not none %}
+    {% if crop and cost_details %}
     <div class="mt-10 space-y-6">
 
-      <div class="bg-green-50 p-5 rounded-xl shadow">
-        <h3 class="text-xl font-bold text-green-800 mb-2">🌿 Estimated Crop Yield</h3>
-        <p class="text-2xl font-bold">{{ estimated_yield }} quintals</p>
+      <!-- Selected Crop Info -->
+      <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-5 rounded-xl shadow-lg">
+        <h3 class="text-2xl font-bold mb-1">🌾 Selected Crop</h3>
+        <p class="text-3xl font-bold">{{ crop }}</p>
+        <p class="text-sm text-green-100 mt-2">Land Area: {{ land_area }} acres</p>
       </div>
 
-      <div class="bg-yellow-50 p-5 rounded-xl shadow">
-        <h3 class="text-xl font-bold text-yellow-800 mb-2">💰 Estimated Total Cost</h3>
-        <p class="text-2xl font-bold">₹{{ total_cost }}</p>
+      <div class="bg-green-50 p-6 rounded-xl shadow-lg border-2 border-green-200">
+        <h3 class="text-2xl font-bold text-green-800 mb-3 flex items-center gap-2">
+          <span class="text-3xl">🌿</span> Estimated Crop Yield
+        </h3>
+        <p class="text-4xl font-bold text-green-700">{{ "%.2f"|format(estimated_yield) }} quintals</p>
+        <p class="text-sm text-gray-600 mt-2">Based on average yield per acre</p>
       </div>
 
-      <div class="bg-white p-5 rounded-xl shadow">
-        <h3 class="text-xl font-bold text-gray-800 mb-2">📦 Cost Breakdown</h3>
-        <ul class="space-y-1 text-gray-700 text-lg">
-          <li><strong>Seeds:</strong> ₹{{ cost_details.seeds }}</li>
-          <li><strong>Fertilizers:</strong> ₹{{ cost_details.fertilizers }}</li>
-          <li><strong>Water:</strong> ₹{{ cost_details.water }}</li>
-          <li><strong>Labor:</strong> ₹{{ cost_details.labor }}</li>
-          <li><strong>Machinery:</strong> ₹{{ cost_details.machinery }}</li>
-          <li><strong>Pesticides:</strong> ₹{{ cost_details.pesticides }}</li>
-          <li><strong>Transport:</strong> ₹{{ cost_details.transport }}</li>
-        </ul>
-        <hr class="my-2"/>
-        <p class="font-bold text-lg">Total: ₹{{ cost_details.total }}</p>
+      <div class="bg-yellow-50 p-6 rounded-xl shadow-lg border-2 border-yellow-200">
+        <h3 class="text-2xl font-bold text-yellow-800 mb-3 flex items-center gap-2">
+          <span class="text-3xl">💰</span> Estimated Total Cost
+        </h3>
+        <p class="text-4xl font-bold text-yellow-700">₹{{ "{:,.2f}".format(total_cost) }}</p>
+        <p class="text-sm text-gray-600 mt-2">Total investment required</p>
       </div>
 
-      <!-- Profit Button -->
-      <div class="text-center mt-4">
-        <button onclick="showProfit()" type="button" class="bg-blue-500 text-white text-lg px-8 py-3 rounded-full hover:bg-blue-600 transition">
-          💹 See Profit
+      <div class="bg-white p-6 rounded-xl shadow-lg border-2 border-gray-200">
+        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <span class="text-3xl">📦</span> Cost Breakdown
+        </h3>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center pb-2 border-b border-gray-200">
+            <span class="font-semibold text-gray-700"><span class="text-xl mr-2">🌾</span> Seeds:</span>
+            <span class="text-lg font-bold text-gray-800">₹{{ "{:,.2f}".format(cost_details.seeds) }}</span>
+          </div>
+          <div class="flex justify-between items-center pb-2 border-b border-gray-200">
+            <span class="font-semibold text-gray-700"><span class="text-xl mr-2">🧪</span> Fertilizers:</span>
+            <span class="text-lg font-bold text-gray-800">₹{{ "{:,.2f}".format(cost_details.fertilizers) }}</span>
+          </div>
+          <div class="flex justify-between items-center pb-2 border-b border-gray-200">
+            <span class="font-semibold text-gray-700"><span class="text-xl mr-2">💧</span> Water:</span>
+            <span class="text-lg font-bold text-gray-800">₹{{ "{:,.2f}".format(cost_details.water) }}</span>
+          </div>
+          <div class="flex justify-between items-center pb-2 border-b border-gray-200">
+            <span class="font-semibold text-gray-700"><span class="text-xl mr-2">👷</span> Labor:</span>
+            <span class="text-lg font-bold text-gray-800">₹{{ "{:,.2f}".format(cost_details.labor) }}</span>
+          </div>
+          <div class="flex justify-between items-center pb-2 border-b border-gray-200">
+            <span class="font-semibold text-gray-700"><span class="text-xl mr-2">🚜</span> Machinery:</span>
+            <span class="text-lg font-bold text-gray-800">₹{{ "{:,.2f}".format(cost_details.machinery) }}</span>
+          </div>
+          <div class="flex justify-between items-center pb-2 border-b border-gray-200">
+            <span class="font-semibold text-gray-700"><span class="text-xl mr-2">🦟</span> Pesticides:</span>
+            <span class="text-lg font-bold text-gray-800">₹{{ "{:,.2f}".format(cost_details.pesticides) }}</span>
+          </div>
+          <div class="flex justify-between items-center pb-2 border-b border-gray-200">
+            <span class="font-semibold text-gray-700"><span class="text-xl mr-2">🚚</span> Transport:</span>
+            <span class="text-lg font-bold text-gray-800">₹{{ "{:,.2f}".format(cost_details.transport) }}</span>
+          </div>
+        </div>
+        <div class="mt-4 pt-4 border-t-2 border-gray-300">
+          <div class="flex justify-between items-center">
+            <span class="text-xl font-bold text-gray-800">💵 Grand Total:</span>
+            <span class="text-2xl font-bold text-green-700">₹{{ "{:,.2f}".format(cost_details.total) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- See Profit Button -->
+      <div class="text-center">
+        <button onclick="showProfit()" type="button" class="bg-gradient-to-r from-blue-600 to-blue-700 text-white text-lg px-10 py-4 rounded-full font-bold hover:from-blue-700 hover:to-blue-800 transition duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+          💹 See Profit Estimation
         </button>
       </div>
 
-      <!-- Profit Section -->
-      <div id="profitSection" style="display: none;" class="bg-blue-50 p-5 rounded-xl shadow mt-4">
-        <h3 class="text-xl font-bold text-blue-800 mb-2">📈 Market Price & Profit Estimation</h3>
-        <p class="text-lg"><strong>Market Price per Quintal:</strong> ₹{{ market_price }}</p>
-        <p class="text-lg"><strong>Total Profit:</strong> ₹{{ profit }}</p>
+      <!-- Profit Section (Hidden by default) -->
+      <div id="profitSection" style="display: none;" class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl shadow-lg border-2 border-blue-300">
+        <h3 class="text-2xl font-bold text-blue-800 mb-4 flex items-center gap-2">
+          <span class="text-3xl">📈</span> Market Price & Profit Estimation
+        </h3>
+        <div class="space-y-4">
+          <div class="bg-white p-4 rounded-lg shadow">
+            <p class="text-sm text-gray-600 mb-1">Market Price per Quintal</p>
+            <p class="text-3xl font-bold text-blue-700">₹{{ "{:,.2f}".format(market_price) }}</p>
+          </div>
+          <div class="bg-white p-4 rounded-lg shadow">
+            <p class="text-sm text-gray-600 mb-1">Total Revenue ({{ "%.2f"|format(estimated_yield) }} quintals × ₹{{ "{:,.2f}".format(market_price) }})</p>
+            <p class="text-3xl font-bold text-green-700">₹{{ "{:,.2f}".format(market_price * estimated_yield) }}</p>
+          </div>
+          <div class="bg-white p-4 rounded-lg shadow">
+            <p class="text-sm text-gray-600 mb-1">Total Cost</p>
+            <p class="text-3xl font-bold text-red-700">₹{{ "{:,.2f}".format(total_cost) }}</p>
+          </div>
+          <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-5 rounded-lg shadow-xl">
+            <p class="text-lg mb-2">💰 Net Profit</p>
+            <p class="text-4xl font-bold">₹{{ "{:,.2f}".format(profit) }}</p>
+            {% if profit > 0 %}
+            <p class="text-sm text-green-100 mt-2">✅ Profitable crop choice!</p>
+            {% elif profit < 0 %}
+            <p class="text-sm text-red-100 mt-2">⚠️ Loss expected. Consider alternatives.</p>
+            {% else %}
+            <p class="text-sm text-yellow-100 mt-2">⚖️ Break-even situation</p>
+            {% endif %}
+          </div>
+        </div>
       </div>
 
     </div>
+    {% elif crop %}
+    <div class="mt-6 bg-red-50 border-2 border-red-200 p-4 rounded-xl text-center">
+      <p class="text-red-700 font-semibold">⚠️ No cost data available for {{ crop }}. Please contact admin.</p>
+    </div>
     {% endif %}
 
-    <!-- Back Button -->
-    <div class="text-center mt-8">
-      <a href="/" class="inline-block bg-gray-700 text-white text-lg px-8 py-3 rounded-full hover:bg-gray-800 transition">
-        🔙 Go Back
+    <!-- Navigation Buttons -->
+    <div class="text-center mt-8 flex gap-4 justify-center flex-wrap">
+      <a href="/" class="inline-block bg-gray-700 text-white text-lg px-8 py-3 rounded-full hover:bg-gray-800 transition shadow-lg">
+        🏠 Home
       </a>
+      {% if crop %}
+      <a href="/compare-crops" class="inline-block bg-blue-600 text-white text-lg px-8 py-3 rounded-full hover:bg-blue-700 transition shadow-lg">
+        ⚖️ Compare Crops
+      </a>
+      {% endif %}
+      {% if session.get('username') %}
+      <a href="/dashboard" class="inline-block bg-green-600 text-white text-lg px-8 py-3 rounded-full hover:bg-green-700 transition shadow-lg">
+        📊 Dashboard
+      </a>
+      {% endif %}
     </div>
 
   </div>
@@ -122,7 +223,7 @@
     function googleTranslateElementInit() {
       new google.translate.TranslateElement({
         pageLanguage: 'en',
-        includedLanguages: 'en,mr',
+        includedLanguages: 'en,mr,hi,ta,te,kn,gu,bn,pa',
         layout: google.translate.TranslateElement.InlineLayout.SIMPLE
       }, 'google_translate_element');
     }
