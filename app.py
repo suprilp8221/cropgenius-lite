@@ -4,13 +4,19 @@ import pickle
 import numpy as np
 import os
 import requests
+import bcrypt
+from datetime import timedelta
 # from tensorflow.keras.models import load_model
 # from tensorflow.keras.preprocessing import image
 
 
 
 app = Flask(__name__)
-app.secret_key = 'your_very_secret_key_here'
+app.secret_key = 'your_very_secret_key_here'  # Change this in production
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # OpenWeatherMap API Configuration
 # Get your free API key from: https://openweathermap.org/api
@@ -345,66 +351,87 @@ def calculate_yield_cost():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        username = request.form.get('username').strip()
-        password = request.form.get('password').strip()
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
 
+        # Validation
         if not username or not password:
-            return "Username and password are required."
+            flash('Username and password are required.', 'error')
+            return render_template('signup.html', error='Username and password are required.')
+        
+        if len(username) < 3:
+            return render_template('signup.html', error='Username must be at least 3 characters long.')
+        
+        if len(password) < 6:
+            return render_template('signup.html', error='Password must be at least 6 characters long.')
+
+        # Hash the password
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
         # Save to database
         conn = sqlite3.connect("crop_info.db")
         cursor = conn.cursor()
 
         try:
-            cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+            cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", 
+                          (username, hashed_password))
             conn.commit()
             conn.close()
-            return redirect('/login')  # Redirect to login page after signup
+            flash('Account created successfully! Please login.', 'success')
+            return redirect('/login')
         except sqlite3.IntegrityError:
             conn.close()
-            return "Username already exists. Please try another."
+            return render_template('signup.html', error='Username already exists. Please try another.')
 
     return render_template('signup.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username').strip()
-        password = request.form.get('password').strip()
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+
+        if not username or not password:
+            return render_template('login.html', error='Please enter both username and password.')
 
         conn = sqlite3.connect("crop_info.db")
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
+        cursor.execute("SELECT password FROM users WHERE username=?", (username,))
         user = cursor.fetchone()
         conn.close()
 
-        if user:
-            session['username'] = username  # Store user in session
-            return redirect('/')  # Redirect to home
+        if user and bcrypt.checkpw(password.encode('utf-8'), user[0]):
+            session.permanent = True
+            session['username'] = username
+            return redirect('/')
         else:
-            return "Invalid credentials. Please try again."
+            return render_template('login.html', error='Invalid username or password. Please try again.')
 
     return render_template('login.html')
 
 @app.route('/admin-login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
-        username = request.form.get('username').strip()
-        password = request.form.get('password').strip()
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+
+        if not username or not password:
+            return render_template('login.html', error='Please enter both username and password.')
 
         conn = sqlite3.connect("crop_info.db")
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM admin WHERE username=? AND password=?", (username, password))
+        cursor.execute("SELECT password FROM admin WHERE username=?", (username,))
         admin = cursor.fetchone()
         conn.close()
 
-        if admin:
+        if admin and bcrypt.checkpw(password.encode('utf-8'), admin[0]):
+            session.permanent = True
             session['admin'] = username
             return redirect('/admin-dashboard')
         else:
-            return "Invalid admin credentials"
+            return render_template('login.html', error='Invalid admin credentials. Please try again.')
 
-    return render_template('admin_login.html')
+    return render_template('login.html')
 
 @app.route('/admin')
 def admin_dashboard():

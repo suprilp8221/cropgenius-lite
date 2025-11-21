@@ -3,42 +3,124 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Login | CropGenius</title>
+  <title>Login | CropGenius</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center min-h-screen">
+<body class="bg-gradient-to-br from-green-400 via-green-500 to-green-600 flex items-center justify-center min-h-screen p-4">
 
-  <div class="bg-white/90 backdrop-blur-md p-8 sm:p-10 rounded-2xl shadow-xl w-full max-w-md">
-    <h2 class="text-2xl sm:text-3xl font-bold text-green-700 mb-6 text-center">🔐 User Login</h2>
+  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-green-600 to-green-700 p-6 text-center">
+      <h1 class="text-3xl font-bold text-white mb-2">🌱 CropGenius</h1>
+      <p class="text-green-100 text-sm">Welcome back! Please login to continue</p>
+    </div>
 
-    <form action="/login" method="POST" class="space-y-5">
-      <div>
-        <label class="block mb-1 text-sm font-medium text-gray-700">Username</label>
-        <input type="text" name="username" required
-               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
-      </div>
-
-      <div>
-        <label class="block mb-1 text-sm font-medium text-gray-700">Password</label>
-        <input type="password" name="password" required
-               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
-      </div>
-
-      <button type="submit"
-              class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold transition">
-        Log&nbsp;In
+    <!-- Tab Navigation -->
+    <div class="flex border-b border-gray-200">
+      <button onclick="switchTab('user')" id="user-tab" 
+              class="flex-1 py-4 text-center font-semibold transition-all border-b-2 border-green-600 text-green-600">
+        👤 User Login
       </button>
-    </form>
+      <button onclick="switchTab('admin')" id="admin-tab" 
+              class="flex-1 py-4 text-center font-semibold transition-all border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+        🔐 Admin Login
+      </button>
+    </div>
 
-    <p class="text-center mt-6 text-sm text-gray-600">
-      Don’t have an account?
-      <a href="/signup" class="text-green-600 font-medium hover:underline">Sign&nbsp;up</a>
-    </p>
+    <!-- User Login Form -->
+    <div id="user-form" class="p-8">
+      {% if error %}
+      <div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+        ⚠️ {{ error }}
+      </div>
+      {% endif %}
+      
+      <form action="/login" method="POST" class="space-y-5">
+        <div>
+          <label class="block mb-2 text-sm font-semibold text-gray-700">Username</label>
+          <input type="text" name="username" required
+                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition">
+        </div>
 
-    <p class="text-center mt-3 text-xs text-gray-500">
-      🔒 Admin? <a href="/admin-login" class="text-blue-600 hover:underline">Login here</a>
-    </p>
+        <div>
+          <label class="block mb-2 text-sm font-semibold text-gray-700">Password</label>
+          <input type="password" name="password" required
+                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition">
+        </div>
+
+        <button type="submit"
+                class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3 rounded-xl font-bold transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+          Login to CropGenius
+        </button>
+      </form>
+
+      <div class="mt-6 text-center">
+        <p class="text-sm text-gray-600">
+          Don't have an account?
+          <a href="/signup" class="text-green-600 font-bold hover:underline">Sign up free</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- Admin Login Form (Hidden by default) -->
+    <div id="admin-form" class="p-8 hidden">
+      {% if error %}
+      <div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+        ⚠️ {{ error }}
+      </div>
+      {% endif %}
+      
+      <form action="/admin-login" method="POST" class="space-y-5">
+        <div>
+          <label class="block mb-2 text-sm font-semibold text-gray-700">Admin Username</label>
+          <input type="text" name="username" required
+                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition">
+        </div>
+
+        <div>
+          <label class="block mb-2 text-sm font-semibold text-gray-700">Admin Password</label>
+          <input type="password" name="password" required
+                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition">
+        </div>
+
+        <button type="submit"
+                class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 rounded-xl font-bold transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+          Login as Admin
+        </button>
+      </form>
+
+      <div class="mt-6 text-center">
+        <p class="text-xs text-gray-500">
+          🔒 Secure admin access only
+        </p>
+      </div>
+    </div>
   </div>
+
+  <script>
+    function switchTab(tab) {
+      const userTab = document.getElementById('user-tab');
+      const adminTab = document.getElementById('admin-tab');
+      const userForm = document.getElementById('user-form');
+      const adminForm = document.getElementById('admin-form');
+
+      if (tab === 'user') {
+        userTab.classList.add('border-green-600', 'text-green-600');
+        userTab.classList.remove('border-transparent', 'text-gray-500');
+        adminTab.classList.remove('border-blue-600', 'text-blue-600');
+        adminTab.classList.add('border-transparent', 'text-gray-500');
+        userForm.classList.remove('hidden');
+        adminForm.classList.add('hidden');
+      } else {
+        adminTab.classList.add('border-blue-600', 'text-blue-600');
+        adminTab.classList.remove('border-transparent', 'text-gray-500');
+        userTab.classList.remove('border-green-600', 'text-green-600');
+        userTab.classList.add('border-transparent', 'text-gray-500');
+        adminForm.classList.remove('hidden');
+        userForm.classList.add('hidden');
+      }
+    }
+  </script>
 
 </body>
 </html>
